@@ -149,6 +149,46 @@ func TestPatchValidate(t *testing.T) {
 				},
 			},
 		},
+		"ValidFromValue": {
+			reason: "FromValue patch with Value and ToFieldPath set should be valid",
+			args: args{
+				patch: &Patch{
+					Type:        PatchTypeFromValue,
+					Value:       pointer.String("foo"),
+					ToFieldPath: pointer.String("spec.foo"),
+				},
+			},
+		},
+		"InvalidFromValueMissingValue": {
+			reason: "Invalid FromValue missing Value should return error",
+			args: args{
+				patch: &Patch{
+					Type:        PatchTypeFromValue,
+					ToFieldPath: pointer.String("spec.foo"),
+				},
+			},
+			want: want{
+				err: &field.Error{
+					Type:  field.ErrorTypeRequired,
+					Field: "value",
+				},
+			},
+		},
+		"InvalidFromValueMissingToFieldPath": {
+			reason: "Invalid FromValue missing ToFieldPath should return error",
+			args: args{
+				patch: &Patch{
+					Type:  PatchTypeFromValue,
+					Value: pointer.String("foo"),
+				},
+			},
+			want: want{
+				err: &field.Error{
+					Type:  field.ErrorTypeRequired,
+					Field: "toFieldPath",
+				},
+			},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

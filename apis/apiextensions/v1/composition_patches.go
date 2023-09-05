@@ -33,6 +33,7 @@ type PatchType string
 const (
 	PatchTypeFromCompositeFieldPath   PatchType = "FromCompositeFieldPath" // Default
 	PatchTypeFromEnvironmentFieldPath PatchType = "FromEnvironmentFieldPath"
+	PatchTypeFromValue                PatchType = "FromValue"
 	PatchTypePatchSet                 PatchType = "PatchSet"
 	PatchTypeToCompositeFieldPath     PatchType = "ToCompositeFieldPath"
 	PatchTypeToEnvironmentFieldPath   PatchType = "ToEnvironmentFieldPath"
@@ -79,7 +80,7 @@ type Patch struct {
 	// Type sets the patching behaviour to be used. Each patch type may require
 	// its own fields to be set on the Patch object.
 	// +optional
-	// +kubebuilder:validation:Enum=FromCompositeFieldPath;FromEnvironmentFieldPath;PatchSet;ToCompositeFieldPath;ToEnvironmentFieldPath;CombineFromEnvironment;CombineFromComposite;CombineToComposite;CombineToEnvironment
+	// +kubebuilder:validation:Enum=FromCompositeFieldPath;FromValue;FromEnvironmentFieldPath;PatchSet;ToCompositeFieldPath;ToEnvironmentFieldPath;CombineFromEnvironment;CombineFromComposite;CombineToComposite;CombineToEnvironment
 	// +kubebuilder:default=FromCompositeFieldPath
 	Type PatchType `json:"type,omitempty"`
 
@@ -88,6 +89,10 @@ type Patch struct {
 	// FromEnvironmentFieldPath, ToCompositeFieldPath, ToEnvironmentFieldPath.
 	// +optional
 	FromFieldPath *string `json:"fromFieldPath,omitempty"`
+
+	// Value is a constant literal to be used as input. Required when type is FromLiteral
+	// +optional
+	Value *string `json:"value,omitempty"`
 
 	// Combine is the patch configuration for a CombineFromComposite,
 	// CombineFromEnvironment, CombineToComposite or CombineToEnvironment patch.
@@ -144,6 +149,13 @@ func (p *Patch) Validate() *field.Error {
 	case PatchTypeFromCompositeFieldPath, PatchTypeFromEnvironmentFieldPath, PatchTypeToCompositeFieldPath, PatchTypeToEnvironmentFieldPath:
 		if p.FromFieldPath == nil {
 			return field.Required(field.NewPath("fromFieldPath"), fmt.Sprintf("fromFieldPath must be set for patch type %s", p.Type))
+		}
+	case PatchTypeFromValue:
+		if p.Value == nil {
+			return field.Required(field.NewPath("value"), fmt.Sprintf("value must be set for patch type %s", p.Type))
+		}
+		if p.ToFieldPath == nil {
+			return field.Required(field.NewPath("toFieldPath"), fmt.Sprintf("toFieldPath must be set for patch type %s", p.Type))
 		}
 	case PatchTypePatchSet:
 		if p.PatchSetName == nil {
